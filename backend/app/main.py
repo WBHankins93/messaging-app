@@ -5,7 +5,7 @@ from .api.routes import router
 app = FastAPI()
 
 # Include routes
-app.include_router(router)
+app.include_router(router, prefix="/api/v1")
 
 @app.get("/")
 async def root():
