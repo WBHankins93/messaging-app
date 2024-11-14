@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import  OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import timedelta
 from typing import List
+from jose import JWTError, jwt
 
 from ..auth import (
     users_db,
@@ -10,6 +11,7 @@ from ..auth import (
     authenticate_user
 )
 from ..config import settings
+from ..auth import oauth2_scheme
 
 router = APIRouter()
 
@@ -55,6 +57,29 @@ async def get_users():
     Retrieve list of users
     """
     return list(users_db.keys())
+
+@router.get("/secure-data")
+async def read_secure_data(token: str = Depends(oauth2_scheme)):
+    """
+    Secure endpoint only accessible through authentication.
+    """
+    # Verify the token
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return {"message": "This is secure data accessible only with a valid token"}
 
 #Intial test of backend
 @router.get("/ping")
