@@ -13,24 +13,29 @@ from ..auth import (
     authenticate_user,
     oauth2_scheme
 )
+from pydantic import BaseModel
+
+class SignupRequest(BaseModel):
+    username: str
+    password: str
 
 
 router = APIRouter()
 
 # Route for User Signup
 @router.post("/signup", status_code=201)
-async def signup(username: str, password: str, db: Session = Depends(get_db)):
+async def signup(request: SignupRequest, db: Session = Depends(get_db)):
     """
     Signup endpoint for user registration.
     """
     # Check if the username already exists in the database
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(User).filter(User.username == request.username).first()
     if user:
         raise HTTPException(status_code=400, detail="Username already registered.")
     
     # Hash the password and store user data in the database
-    hashed_password = get_password_hash(password)
-    new_user = User(username=username, hashed_password=hashed_password)
+    hashed_password = get_password_hash(request.password)
+    new_user = User(username=request.username, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

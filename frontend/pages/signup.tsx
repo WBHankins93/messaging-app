@@ -1,13 +1,21 @@
 import { useState } from "react";
+import { signup } from "../services/api";
 
 export default function Signup() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Username:", username);
-    console.log("Password:", password);
+    try{
+        const response = await signup(username, password);
+        setMessage(response.data.message);
+        console.log("Signup successful:", response.data);
+    } catch (error: any) {
+        setMessage(error.response?.data?.detail || "Signup failed");
+        console.error("Signup error:", error);
+    }
   };
 
   return (
