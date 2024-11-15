@@ -18,20 +18,35 @@ export default function Signup(): JSX.Element {
     e.preventDefault();
     setMessage(null);
 
-    try{
+    try {
         const response = await signup(username, password);
         const data: SignupResponse = response.data;
-        setMessage(data.message);
-        console.log("Signup successful:", response);
-
-    } catch (error) {
-        if (error instanceof AxiosError && error.response) {
-            setMessage(error.response.data.detail || "Signup failed");
-        } else {
+        setMessage(data.message); // Display success message
+        console.log("Signup successful:", data);
+      
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+            if (error.response) {
+              // If the server responds with an error status
+              if (error.response.status === 400) {
+                // Set the message based on server's error message or use a default
+                setMessage(error.response.data.detail || "User already exists.");
+              } else {
+                setMessage("Signup failed.");
+              }
+            } else if (error.request) {
+              // If the request was made but no response was received
+              setMessage("No response from server. Please try again later.");
+            } else {
+              // For any other errors that occurred in setting up the request
+              setMessage("Signup failed due to unexpected error.");
+            }
+          } else {
+            // Generic fallback message for non-Axios errors
             setMessage("An unexpected error occurred.");
-        }
-        console.error("singup error:", error);
-    }
+          }
+        console.error("Signup error:", error);
+      };
   };
 
   return (
