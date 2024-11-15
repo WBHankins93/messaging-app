@@ -1,20 +1,36 @@
 import { useState } from "react";
 import { signup } from "../services/api";
+import { AxiosError } from "axios";
 
-export default function Signup() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+interface SignupResponse {
+    message: string;
+}
 
-  const handleSignup = async (e: React.FormEvent) => {
+// Define a custom type for error messages
+type ErrorMessage = string | null;
+
+export default function Signup(): JSX.Element {
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [message, setMessage] = useState<ErrorMessage>(null);
+
+  const handleSignup = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    setMessage(null);
+
     try{
         const response = await signup(username, password);
-        setMessage(response.data.message);
-        console.log("Signup successful:", response.data);
-    } catch (error: any) {
-        setMessage(error.response?.data?.detail || "Signup failed");
-        console.error("Signup error:", error);
+        const data: SignupResponse = response.data;
+        setMessage(data.message);
+        console.log("Signup successful:", response);
+
+    } catch (error) {
+        if (error instanceof AxiosError && error.response) {
+            setMessage(error.response.data.detail || "Signup failed");
+        } else {
+            setMessage("An unexpected error occurred.");
+        }
+        console.error("singup error:", error);
     }
   };
 
@@ -44,6 +60,7 @@ export default function Signup() {
         <br />
         <button type="submit">Sign Up</button>
       </form>
+      {message && <p>{message}</p>}
     </div>
   );
 }
