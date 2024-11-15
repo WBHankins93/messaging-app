@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router
 from .database import engine
@@ -28,9 +28,13 @@ async def root():
     return {"message": "Messaging app backend"}
 
 
-# WebSocket placeholder
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
     await websocket.accept()
-    await websocket.send_text(f"Hello client {client_id}")
-    await websocket.close()
+    try:
+        while True:
+            data = await websocket.receive_test()
+            print(f"Recevied message from client {client_id}: {data}")
+            await websocket.send_text(f"Echo: {data}")
+    except WebSocketDisconnect:
+        print(f"Client {client_id} disconnected")
