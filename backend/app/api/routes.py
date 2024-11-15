@@ -1,20 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import  OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import  OAuth2PasswordRequestForm
 from datetime import timedelta
 from typing import List
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from ..models import User
 from ..database import get_db
-
+from ..config import settings
 from ..auth import (
     get_password_hash,
     create_access_token,
     authenticate_user,
     oauth2_scheme
 )
-from ..config import settings
-from ..auth import oauth2_scheme
+
 
 router = APIRouter()
 
@@ -55,7 +54,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),  db: Session =
     # Generate JWT token if auth is successful
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user["username"]}, expires_delta=access_token_expires
+        data={"sub": user.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
