@@ -33,7 +33,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
     await websocket.accept()
     try:
         while True:
-            data = await websocket.receive_test()
+            data = await websocket.receive_text()
             print(f"Recevied message from client {client_id}: {data}")
             await websocket.send_text(f"Echo: {data}")
     except WebSocketDisconnect:

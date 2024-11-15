@@ -1,5 +1,6 @@
 export class WebSocketClient {
     private socket: WebSocket | null = null;
+    private isConnected: boolean = false;
 
     constructor(private url: string) {}
 
@@ -10,6 +11,7 @@ export class WebSocketClient {
 
         this.socket.onopen = () => {
             console.log("WebSocket connection established");
+            this.isConnected = true;
         };
 
         this.socket.onmessage = (event) => {
@@ -18,10 +20,12 @@ export class WebSocketClient {
 
         this.socket.onclose = () => {
             console.log("WebSocket connection closed");
+            this.isConnected = false;
         };
 
         this.socket.onerror = (error) => {
             console.log("WebSocket error:", error);
+            this.isConnected = false;
         };
     }
 
@@ -30,7 +34,7 @@ export class WebSocketClient {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(message);
         } else {
-            console.error("WebSocket is not open. Unabel to send message.");
+            console.error("WebSocket is not open. Unable to send message.");
         }
     }
 
@@ -38,6 +42,7 @@ export class WebSocketClient {
     disconnect() {
         if (this.socket) {
             this.socket.close();
+            this.socket = null;
         }
     }
 }
