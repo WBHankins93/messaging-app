@@ -20,6 +20,6 @@ async def root():
 # WebSocket placeholder
 @app.websocket("/ws/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int):
-    await websocket.accept
+    await websocket.accept()
     await websocket.send_text(f"Hello client {client_id}")
     await websocket.close()
