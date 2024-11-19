@@ -1,15 +1,22 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router
+import logging
+
 from .database import engine
 from .models import Base
-
 
 #Intialize FastAPI
 app = FastAPI()
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+# Basic logging config set up
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+logger = logging.getLogger("websocket")
+logger.setLevel(logging.INFO)
 
 # CORS to allow requests to the frontend
 app.add_middleware(
@@ -37,4 +44,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
             print(f"Recevied message from client {client_id}: {data}")
             await websocket.send_text(f"Echo: {data}")
     except WebSocketDisconnect:
-        print(f"Client {client_id} disconnected")
+        logger.info(f"Client {client_id} disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")

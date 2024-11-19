@@ -4,6 +4,8 @@ from datetime import timedelta
 from typing import List
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+
 from ..models import User
 from ..database import get_db
 from ..config import settings
@@ -13,14 +15,30 @@ from ..auth import (
     authenticate_user,
     oauth2_scheme
 )
-from pydantic import BaseModel
+
 
 class SignupRequest(BaseModel):
     username: str
     password: str
 
-
 router = APIRouter()
+
+def is_admin_user(token: str, db: Session):
+    try:
+        payload: jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+        user = deb.query(User).filter(User.username == username).first()
+        if not user or not user.is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only admins can perform this action.",
+            )
+        return user
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials.",
+        )
 
 # Route for User Signup
 @router.post("/signup", status_code=201)
@@ -41,6 +59,8 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
     db.refresh(new_user)
 
     return {"message": "User created successfully"}
+
+@router.post("")
 
 @router.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(),  db: Session = Depends(get_db)):
