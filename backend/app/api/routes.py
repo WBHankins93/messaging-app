@@ -87,6 +87,35 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),  db: Session =
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+@router.post("/token/refresh")
+async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
+    """
+    Refreshes the access token using a valid refresh token.
+    """
+    try:
+        # Decode the refresh token
+        payload = jwt.decode(refresh_token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token.",
+            )
+        
+        # Verify the user exists
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid refresh token.",
+            )
+        
+        # Generate a new access token
+        access_token = create_access_token(data={"sub": username})
+        return {"access_token": access_token, "token_type": "bearer"}
+    except JWTError:
+        raise HTTPException(status_code=403, detail="Invalid refresh token.")
+
 @router.get("/users", response_model=List[str])
 async def get_users(user: User = Depends(is_admin_user), db: Session = Depends(get_db)):
     """
