@@ -1,22 +1,31 @@
 import { useState } from "react";
 import { signup } from "../services/api";
 import { AxiosError } from "axios";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Alert,
+  CircularProgress,
+} from "@mui/material";
 
 interface SignupResponse {
     message: string;
 }
 
-// Define a custom type for error messages
-type ErrorMessage = string | null;
-
 export default function Signup(): JSX.Element {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [message, setMessage] = useState<ErrorMessage>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [isError, setIsError] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignup = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setMessage(null);
+    setIsError(false);
+    setIsLoading(true);
 
     try {
         const response = await signup(username, password);
@@ -50,32 +59,58 @@ export default function Signup(): JSX.Element {
   };
 
   return (
-    <div>
-      <h1>Signup</h1>
-      <form onSubmit={handleSignup}>
-        <label>
-          Username:
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </label>
-        <br />
-        <label>
-          Password:
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-        <br />
-        <button type="submit">Sign Up</button>
-      </form>
-      {message && <p>{message}</p>}
-    </div>
+    <Box
+      display="flex"
+      flexDirection="column"
+      justifyContent="center"
+      alignItems="center"
+      height="100vh"
+      p={3}
+    >
+      <Typography variant="h4" gutterBottom>
+        Signup
+      </Typography>
+      <Box
+        component="form"
+        onSubmit={handleSignup}
+        display="flex"
+        flexDirection="column"
+        width="100%"
+        maxWidth="400px"
+        gap={2}
+      >
+        <TextField
+          label="Username"
+          variant="outlined"
+          fullWidth
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
+        <TextField
+          label="Password"
+          type="password"
+          variant="outlined"
+          fullWidth
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          fullWidth
+          disabled={isLoading}
+        >
+          {isLoading ? <CircularProgress size={24} /> : "Sign Up"}
+        </Button>
+      </Box>
+      {message && (
+        <Alert severity={isError ? "error" : "success"} sx={{ mt: 2 }}>
+          {message}
+        </Alert>
+      )}
+    </Box>
   );
 }
