@@ -29,7 +29,7 @@ def get_user_by_username(username: str, db: Session):
 
 async def authenticate_user(username: str, password: str, db: Session):
     user = get_user_by_username(username, db)
-    if not user or not verify_password(password, user['password']):
+    if not user or not verify_password(password, user.hashed_password):
         return False
     return user
 

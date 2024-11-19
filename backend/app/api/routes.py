@@ -23,11 +23,16 @@ class SignupRequest(BaseModel):
 
 router = APIRouter()
 
-def is_admin_user(token: str, db: Session):
+def is_admin_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
-        payload: jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
-        user = deb.query(User).filter(User.username == username).first()
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+            )
+        user = db.query(User).filter(User.username == username).first()
         if not user or not user.is_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -60,7 +65,6 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
 
     return {"message": "User created successfully"}
 
-@router.post("")
 
 @router.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(),  db: Session = Depends(get_db)):
@@ -84,9 +88,9 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),  db: Session =
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/users", response_model=List[str])
-async def get_users(db: Session = Depends(get_db)):
+async def get_users(user: User = Depends(is_admin_user), db: Session = Depends(get_db)):
     """
-    Retrieve list of users
+    Retrieve list of users (Admin-only)
     """
     users = db.query(User.username).all()
     return [user[0] for user in users]
