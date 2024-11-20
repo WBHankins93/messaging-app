@@ -22,6 +22,9 @@ class SignupRequest(BaseModel):
     username: str
     password: str
 
+class TokenRefreshRequest(BaseModel):
+    refresh_token: str
+
 router = APIRouter()
 
 def is_admin_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
@@ -92,13 +95,13 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),  db: Session =
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @router.post("/token/refresh")
-async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
+async def refresh_token(request: TokenRefreshRequest, db: Session = Depends(get_db)):
     """
     Refreshes the access token using a valid refresh token.
     """
     try:
         # Decode the refresh token
-        payload = jwt.decode(refresh_token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(request.refresh_token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise HTTPException(
@@ -151,7 +154,33 @@ async def read_secure_data(token: str = Depends(oauth2_scheme)):
         )
     return {"message": "This is secure data accessible only with a valid token"}
 
-#Intial test of backend
-@router.get("/ping")
-async def ping():
-    return {"message": "pong"}
+@router.get("/chat")
+async def get_chat_messages(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """
+    Access chat messages - Secure endpoint.
+    """
+    try:
+        # Decode token
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+
+        # Validate user exists
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found.",
+            )
+
+        return {"message": f"Welcome to the chat, {username}!"}
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials.",
+        )
+
+# Admin Endpoint
+@router.get("/admin")
+async def admin_dashboard(user: User = Depends(is_admin_user)):
+
+    return {"message": f"Welcome Admin {user.username}!"}
