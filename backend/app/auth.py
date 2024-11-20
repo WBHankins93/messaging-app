@@ -43,7 +43,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta]= None) ->
     
     return jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.ALGORITHM)
 
-def create_access_token(data: dict) -> str:
+def create_refresh_token(data: dict) -> str:
     """
     Creates a refresh token with long expiration.
     """

@@ -85,7 +85,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),  db: Session =
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    refresh_token = create_refresh_token(data{"sub": user.username})
+
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 @router.post("/token/refresh")
 async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
