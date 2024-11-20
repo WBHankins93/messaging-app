@@ -12,6 +12,7 @@ from ..config import settings
 from ..auth import (
     get_password_hash,
     create_access_token,
+    create_refresh_token,
     authenticate_user,
     oauth2_scheme
 )
@@ -86,7 +87,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),  db: Session =
         data={"sub": user.username}, expires_delta=access_token_expires
     )
 
-    refresh_token = create_refresh_token(data{"sub": user.username})
+    refresh_token = create_refresh_token(data={"sub": user.username})
 
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 

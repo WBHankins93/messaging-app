@@ -7,7 +7,7 @@ from alembic import context
 from app.database import Base  # Update with your actual module path
 from app.models import *       # Import models to ensure migrations detect them
 
-Base = declarative_base
+
 target_metadata = Base.metadata
 
 # this is the Alembic Config object
@@ -20,16 +20,8 @@ if config.config_file_name is not None:
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
+    """
+    Run migrations in 'offline' mode.
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
