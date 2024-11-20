@@ -1,10 +1,11 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from .api.routes import router
 import logging
+from sqlalchemy.orm import Session
 
-from .database import engine
-from .models import Base
+from .database import engine, SessionLocal, get_db
+from .models import Base, Message
+from .api.routes import router, decode_jwt
 
 #Intialize FastAPI
 app = FastAPI()
@@ -35,15 +36,31 @@ async def root():
     return {"message": "Messaging app backend"}
 
 
-@app.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
-    await websocket.accept()
+@app.websocket("/ws/{room_id}")
+async def websocket_endpoint(websocket: WebSocket, room_id: str):
+    db = SessionLocal()
+    
     try:
+        await websocket.accept()
+        logger.info(f"Client connected to room {room_id}")
+
         while True:
             data = await websocket.receive_text()
-            print(f"Recevied message from client {client_id}: {data}")
-            await websocket.send_text(f"Echo: {data}")
+            
+            # Extract user from token
+            token = websocket.headers.get("Authorization").split("Bearer")[-1]
+            user = decode_jwt(token, db)
+
+            # Save message to database
+            new_message = Message(content=data, sender_id=user.id, room_id=room_id)
+            db.add(new_message)
+            db.commit()
+
+            await websocket.send_text(f"{user.username}: {data}")
+
     except WebSocketDisconnect:
-        logger.info(f"Client {client_id} disconnected")
+        logger.info(f"Client disconnected from room {room_id}")
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
+    finally:
+        db.close()

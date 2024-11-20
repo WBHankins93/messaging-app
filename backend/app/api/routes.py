@@ -6,7 +6,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from ..models import User
+from ..models import User, Message
 from ..database import get_db
 from ..config import settings
 from ..auth import (
@@ -41,6 +41,31 @@ def is_admin_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only admins can perform this action.",
+            )
+        return user
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials.",
+        )
+    
+def decode_jwt(token: str, db: Session) -> User:
+    """
+    Decode the JWT token and validate user.
+    """
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token. User not found.",
+            )
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token. User not found.",
             )
         return user
     except JWTError:
@@ -159,28 +184,33 @@ async def get_chat_messages(token: str = Depends(oauth2_scheme), db: Session = D
     """
     Access chat messages - Secure endpoint.
     """
-    try:
-        # Decode token
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.ALGORITHM])
-        username: str = payload.get("sub")
+    user = decode_jwt(token, db)
+    return {"message": f"Welcome to the chat, {user.username}!"}
 
-        # Validate user exists
-        user = db.query(User).filter(User.username == username).first()
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found.",
-            )
 
-        return {"message": f"Welcome to the chat, {username}!"}
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials.",
-        )
+@router.get("/chat/history")
+async def get_chat_history(
+    token: str = Depends(oauth2_scheme),
+    room_id: str = "global",
+    db: Session = Depends(get_db),
+):
+    user = decode_jwt(token, db)
+    messages = (
+        db.query(Message)
+        .filter(Message.room_id == room_id)
+        .order_by(Message.timestamp)
+        .all()
+    )
+    return {"room_id": room_id, "messages": [{"user": msg.sender.username, "content": msg.content, "timestamp": msg.timestamp} for msg in messages]}
 
 # Admin Endpoint
 @router.get("/admin")
-async def admin_dashboard(user: User = Depends(is_admin_user)):
-
+async def admin_dashboard(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    user = decode_jwt(token, db)
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can acess this endpoint.",
+        )
+                            
     return {"message": f"Welcome Admin {user.username}!"}

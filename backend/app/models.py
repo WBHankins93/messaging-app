@@ -18,6 +18,7 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     content = Column(String, nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id"))
+    room_id = Column(String, default="global")
     timestamp = Column(DateTime, default=datetime.now(timezone.utc))
 
     # Relationship to link back to the user who sent this message
