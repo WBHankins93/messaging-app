@@ -1,4 +1,4 @@
-import React, { useEffect,useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { WebSocketClient } from "../utils/websocket";
 import {
     Box,
@@ -10,6 +10,7 @@ import {
     ListItemText,
     Paper
 } from "@mui/material";
+import { getToken } from "../utils/sessionStorage";
 
 const Chat = () => {
   const [messages, setMessages] = useState<string[]>([]);
@@ -17,7 +18,7 @@ const Chat = () => {
   const chatBoxRef = useRef<HTMLDivElement>(null);
 
   const wsClient = useRef<WebSocketClient | null>(null);
-  const token = localStorage.getItem("accessToken");
+  const token = getToken("accessToken");
   const roomId = "global"
 
   useEffect(() => {

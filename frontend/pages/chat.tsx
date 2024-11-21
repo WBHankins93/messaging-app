@@ -1,11 +1,12 @@
 import React from "react";
+import ProtectedRoute from "../components/ProtectedRoute";
 import Chat from "../components/Chat";
 
 const ChatPage = () => {
     return (
-        <div>
+        <ProtectedRoute>
             <Chat />
-        </div>
+        </ProtectedRoute>
     );
 };
 
