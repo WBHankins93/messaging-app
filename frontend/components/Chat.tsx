@@ -17,10 +17,16 @@ const Chat = () => {
   const chatBoxRef = useRef<HTMLDivElement>(null);
 
   const wsClient = useRef<WebSocketClient | null>(null);
+  const token = localStorage.getItem("accessToken");
+  const roomId = "global"
 
   useEffect(() => {
+    if (!token) {
+      console.error("No access token found. Cannot connect to WebSocket.");
+      return;
+  }
 
-    wsClient.current = new WebSocketClient("ws://localhost:8000/ws/1");
+    wsClient.current = new WebSocketClient(`ws://localhost:8000/ws/${roomId}`, token);
 
     wsClient.current.connect((message) => {
         setMessages((prevMessages) => [...prevMessages, message]);
@@ -29,7 +35,7 @@ const Chat = () => {
     return () => {
         wsClient.current?.disconnect();
     };
-  }, []);
+  }, [token, roomId]);
 
   // Send message to WebSocket serve
   const handleSendMessage = () => {

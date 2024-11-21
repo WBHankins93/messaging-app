@@ -1,8 +1,11 @@
 export class WebSocketClient {
     private socket: WebSocket | null = null;
+    private url: string;
     private isConnected: boolean = false;
 
-    constructor(private url: string) {}
+    constructor(baseUrl: string, token: string) {
+        this.url = `${baseUrl}?token=${token}`
+    }
 
 
     // Connect to WebSocket
