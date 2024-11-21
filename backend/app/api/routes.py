@@ -100,6 +100,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),  db: Session =
     """
     Login endpoint for user authentication
     """
+    print(f"Username: {form_data.username}, Password: {form_data.password}")
+    
     user = await authenticate_user(form_data.username, form_data.password, db)
     if not user:
         # If authentication fails, raise 401 error
@@ -118,6 +120,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(),  db: Session =
     refresh_token = create_refresh_token(data={"sub": user.username})
 
     return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+
 
 @router.post("/token/refresh")
 async def refresh_token(request: TokenRefreshRequest, db: Session = Depends(get_db)):
@@ -148,6 +151,7 @@ async def refresh_token(request: TokenRefreshRequest, db: Session = Depends(get_
     except JWTError:
         raise HTTPException(status_code=403, detail="Invalid refresh token.")
 
+
 @router.get("/users", response_model=List[str])
 async def get_users(user: User = Depends(is_admin_user), db: Session = Depends(get_db)):
     """
@@ -155,6 +159,7 @@ async def get_users(user: User = Depends(is_admin_user), db: Session = Depends(g
     """
     users = db.query(User.username).all()
     return [user[0] for user in users]
+
 
 @router.get("/secure-data")
 async def read_secure_data(token: str = Depends(oauth2_scheme)):
@@ -179,6 +184,7 @@ async def read_secure_data(token: str = Depends(oauth2_scheme)):
         )
     return {"message": "This is secure data accessible only with a valid token"}
 
+
 @router.get("/chat")
 async def get_chat_messages(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     """
@@ -202,6 +208,7 @@ async def get_chat_history(
         .all()
     )
     return {"room_id": room_id, "messages": [{"user": msg.sender.username, "content": msg.content, "timestamp": msg.timestamp} for msg in messages]}
+
 
 # Admin Endpoint
 @router.get("/admin")

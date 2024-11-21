@@ -42,7 +42,11 @@ export const signup = (username: string, password:string): Promise<AxiosResponse
 
 // log in user and get token
 export const login = (username: string, password:string): Promise<AxiosResponse<LoginResponse>> =>
-    apiClient.post<LoginResponse>("/token", new URLSearchParams({ username, password }));
+    apiClient.post<LoginResponse>("/token", new URLSearchParams({ username, password }).toString(),
+        {
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        }
+    );
 
 // refresh access token 
 export const refreshAccessToken = (refreshToken: string): Promise<AxiosResponse<RefreshResponse>> =>

@@ -2,11 +2,8 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import { getToken } from "../utils/sessionStorage";
 
-interface Props {
-    children: React.ReactNode;
-}
 
-const ProtectedRoute: React.FC<Props> = ({ children }) => {
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     const router = useRouter();
 
     useEffect(() => {
@@ -16,7 +13,7 @@ const ProtectedRoute: React.FC<Props> = ({ children }) => {
         }
     }, [router]);
 
-    return <>{children}</>
+    return children;
 };
 
 export default ProtectedRoute;
