@@ -38,7 +38,11 @@ const Chat = () => {
 
     const handleIncomingMessage = (message: string) => {
       console.log("New message received:", message);
-      setMessages((prevMessages) => [...prevMessages, message]);
+      setMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages, message];
+        console.log("Updated messages state:", updatedMessages); // Debug log
+        return updatedMessages;
+    });
     };
 
     const handleReconnecting = () => {
@@ -68,6 +72,10 @@ const Chat = () => {
     };
 }, [token, roomId]);
 
+useEffect(() => {
+  console.log("messages state updated:", messages);
+}, [messages]);
+
 const handleLogout = () => {
   clearToken("accessToken");
   clearToken("refreshToken");
@@ -80,6 +88,7 @@ const handleLogout = () => {
   // Send message to WebSocket serve
   const handleSendMessage = () => {
     if (input.trim() && wsClient.current) {
+      console.log("Sending input:", input);
         wsClient.current.sendMessage(input);
         setInput("");
     }
@@ -113,6 +122,7 @@ const handleLogout = () => {
           overflowY: "auto",
           p: 2,
           bgcolor: "#fafafa",
+          border: "1px solid red",
         }}
       >
         <List>
