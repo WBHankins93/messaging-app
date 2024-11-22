@@ -2,6 +2,10 @@ export class WebSocketClient {
     private socket: WebSocket | null = null;
     private url: string;
     private isConnected: boolean = false;
+    private reconnectInterval: number = 5000;
+    private reconnectAttempts: number = 0;
+    private maxReconnectAttempts: number = 10;
+    private onMessageCallback: (message: string) => void = () => {};
 
     constructor(baseUrl: string, token: string) {
         this.url = `${baseUrl}?token=${token}`
@@ -10,20 +14,34 @@ export class WebSocketClient {
 
     // Connect to WebSocket
     connect(onMessage: (message: string) => void) {
+        this.onMessageCallback = onMessage;
+
         this.socket = new WebSocket(this.url);
 
         this.socket.onopen = () => {
             console.log("WebSocket connection established");
             this.isConnected = true;
+            this.reconnectAttempts = 0;
         };
 
         this.socket.onmessage = (event) => {
             onMessage(event.data);
         };
 
-        this.socket.onclose = () => {
-            console.log("WebSocket connection closed");
+        this.socket.onclose = (event) => {
+            console.warn("WebSocket connection closed:", event.reason);
             this.isConnected = false;
+
+            // Attempt reconnection if not manually disconnected
+            if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                console.log("Attempting to reconnect...");
+                setTimeout(() => {
+                    this.reconnectAttempts++;
+                    this.connect(onMessage); // Reconnect
+                }, this.reconnectInterval);
+            } else {
+                console.error("Max reconnect attempts reached. Giving up.");
+            }
         };
 
         this.socket.onerror = (error) => {
