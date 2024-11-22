@@ -8,13 +8,16 @@ import {
     List,
     ListItem,
     ListItemText,
-    Paper
+    Paper,
+    Alert
 } from "@mui/material";
 import { getToken } from "../utils/sessionStorage";
 
 const Chat = () => {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState<string>("");
+  const [isReconnecting, setIsReconnecting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
 
   const wsClient = useRef<WebSocketClient | null>(null);
@@ -22,21 +25,46 @@ const Chat = () => {
   const roomId = "global"
 
   useEffect(() => {
+    console.log("useEffect triggered with token:", token, "and roomId:", roomId);
+
     if (!token) {
-      console.error("No access token found. Cannot connect to WebSocket.");
+      setError("No access token found. Cannot connect to WebSocket.");
       return;
-  }
+    }
 
     wsClient.current = new WebSocketClient(`ws://localhost:8000/ws/${roomId}`, token);
 
-    wsClient.current.connect((message) => {
-        setMessages((prevMessages) => [...prevMessages, message]);
-    });
+    const handleIncomingMessage = (message: string) => {
+      console.log("New message received:", message);
+      setMessages((prevMessages) => [...prevMessages, message]);
+    };
+
+    const handleReconnecting = () => {
+      console.warn("WebSocket reconnecting...");
+      setIsReconnecting(true);
+      setError(null);
+    };
+
+    const handleReconnected = () => {
+      console.log("WebSocket reconnected.");
+      setIsReconnecting(false);
+    };
+
+    const handleError = (err: string) => {
+      console.error("WebSocket error:", err);
+      setError(`WebSocket error: ${err}`);
+    };
+
+    console.log("Connecting to WebSocket...");
+    wsClient.current.connect(handleIncomingMessage, handleReconnecting, handleReconnected, handleError);
 
     return () => {
-        wsClient.current?.disconnect();
+        console.log("Cleaning up WebSocket connection...");
+        if (wsClient.current) {
+            wsClient.current.disconnect();
+        }
     };
-  }, [token, roomId]);
+}, [token, roomId]);
 
   // Send message to WebSocket serve
   const handleSendMessage = () => {
