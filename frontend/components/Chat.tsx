@@ -11,7 +11,8 @@ import {
     Paper,
     Alert
 } from "@mui/material";
-import { getToken } from "../utils/sessionStorage";
+import { clearToken, getToken } from "../utils/sessionStorage";
+import { useRouter } from "next/router";
 
 const Chat = () => {
   const [messages, setMessages] = useState<string[]>([]);
@@ -23,6 +24,7 @@ const Chat = () => {
   const wsClient = useRef<WebSocketClient | null>(null);
   const token = getToken("accessToken");
   const roomId = "global"
+  const router = useRouter();
 
   useEffect(() => {
     console.log("useEffect triggered with token:", token, "and roomId:", roomId);
@@ -66,6 +68,15 @@ const Chat = () => {
     };
 }, [token, roomId]);
 
+const handleLogout = () => {
+  clearToken("accessToken");
+  clearToken("refreshToken");
+  
+  if (wsClient.current)
+    wsClient.current.disconnect();
+    router.push("/login");
+}
+
   // Send message to WebSocket serve
   const handleSendMessage = () => {
     if (input.trim() && wsClient.current) {
@@ -92,7 +103,9 @@ const Chat = () => {
       <Typography variant="h4" gutterBottom>
         WebSocket Chat
       </Typography>
-
+      <Button variant="contained" color="secondary" onClick={handleLogout}>
+        Logout
+      </Button>
       <Paper
         ref={chatBoxRef}
         elevation={3}

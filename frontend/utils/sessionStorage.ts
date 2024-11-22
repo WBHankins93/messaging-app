@@ -22,3 +22,8 @@ export const clearToken = (key: string): void => {
         sessionStorage.removeItem(key);
     }
 };
+
+
+export const clearAllTokens = (): void => {
+    sessionStorage.clear();
+}
