@@ -103,9 +103,7 @@ const handleLogout = () => {
       <Typography variant="h4" gutterBottom>
         WebSocket Chat
       </Typography>
-      <Button variant="contained" color="secondary" onClick={handleLogout}>
-        Logout
-      </Button>
+      
       <Paper
         ref={chatBoxRef}
         elevation={3}
@@ -151,6 +149,9 @@ const handleLogout = () => {
           Send
         </Button>
       </Box>
+      <Button variant="contained" color="secondary" onClick={handleLogout}>
+        Logout
+      </Button>
     </Box>
   );
 };

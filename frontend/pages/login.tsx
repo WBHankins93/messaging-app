@@ -8,6 +8,8 @@ import {
   Typography,
   Alert,
   CircularProgress,
+  Checkbox,
+  FormControlLabel
 } from "@mui/material";
 import { useRouter } from "next/router";
 import { saveToken } from "../utils/sessionStorage"; // Use sessionStorage utilities
@@ -20,6 +22,7 @@ interface LoginResponse {
 export default function Login(): JSX.Element {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isError, setIsError] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -100,6 +103,15 @@ export default function Login(): JSX.Element {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+          }
+          label="Remember Me"
         />
         <Button
           type="submit"
